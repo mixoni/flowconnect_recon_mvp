@@ -11,6 +11,10 @@ class InvoiceService:
 
     def create(self, tenant_id: int, amount: float, currency: str="USD",
                invoice_date: dt.date | None=None, description: str | None=None) -> Invoice:
+
+        if amount <= 0:
+            raise BadRequestError("Invoice amount must be > 0")
+
         inv = Invoice(
             tenant_id=tenant_id,
             amount=amount,

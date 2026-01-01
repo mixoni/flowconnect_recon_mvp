@@ -6,3 +6,7 @@ class ConflictError(Exception):
 
 class ValidationError(Exception):
     pass
+
+class BadRequestError(Exception):
+    pass
+

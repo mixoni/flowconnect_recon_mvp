@@ -8,18 +8,16 @@ from app.core.errors import NotFoundError, ConflictError
 from app.api.rest import router as rest_router
 from app.api.graphql import build_graphql_router
 from app.db.init_db import init_db
+from app.core.exception_handlers import register_exception_handlers
+
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Multi-Tenant Reconciliation API (MVP)")
+
+    register_exception_handlers(app)
+
+
     init_db()
-
-    @app.exception_handler(NotFoundError)
-    async def _nf_handler(request: Request, exc: NotFoundError):
-        return JSONResponse(status_code=404, content={'detail': str(exc)})
-
-    @app.exception_handler(ConflictError)
-    async def _conflict_handler(request: Request, exc: ConflictError):
-        return JSONResponse(status_code=409, content={'detail': str(exc)})
 
     app.include_router(rest_router)
 
@@ -27,3 +25,4 @@ def create_app() -> FastAPI:
     return app
 
 app = create_app()
+
