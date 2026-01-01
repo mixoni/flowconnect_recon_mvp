@@ -7,6 +7,8 @@ from app.db.session import get_session
 from app.modules.reconciliation.schemas import ReconcileRequest, MatchOut, ExplainOut
 from app.modules.reconciliation.service import ReconciliationService, MatchService
 from app.modules.reconciliation.ai import AIExplainService, ExplainContext
+from app.modules.reconciliation.explain_service import ExplainService
+
 
 router = APIRouter(tags=["reconciliation"])
 
@@ -42,7 +44,7 @@ def confirm_match(tenant_id: int, match_id: int, session: Session = Depends(get_
 @router.get("/tenants/{tenant_id}/reconcile/explain", response_model=ExplainOut)
 def explain(tenant_id: int, invoice_id: int, transaction_id: int, session: Session = Depends(get_session)) -> ExplainOut:
     # Gather deterministic context via reconciliation service helpers
-    ctx = ReconciliationService(session).build_explain_context(tenant_id, invoice_id, transaction_id)
+    ctx = ExplainService(session).build_context(tenant_id, invoice_id, transaction_id)
     explainer = AIExplainService()
     text = explainer.explain_or_fallback(ctx)
     return ExplainOut(explanation=text)
