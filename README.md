@@ -7,7 +7,7 @@ This repo implements a **multi-tenant** invoice reconciliation backend in **Pyth
 - SQLAlchemy 2.0
 - SQLite (local)
 
-The goal is to demonstrate senior-level engineering fundamentals: **tenant isolation**, **transaction boundaries**, **idempotent bulk import**, deterministic **reconciliation scoring**, and **pragmatic AI integration** (with graceful fallback).
+The goal is to demonstrate engineering fundamentals: **tenant isolation**, **transaction boundaries**, **idempotent bulk import**, deterministic **reconciliation scoring**, and **pragmatic AI integration** (with graceful fallback).
 
 ## Quickstart
 
