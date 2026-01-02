@@ -3,7 +3,7 @@ import datetime as dt
 from sqlalchemy.orm import Session
 from sqlalchemy import select, delete
 from app.db.models import Invoice
-from app.core.errors import NotFoundError
+from app.core.errors import NotFoundError, BadRequestError
 
 class InvoiceService:
     def __init__(self, session: Session):
