@@ -49,6 +49,7 @@ Transport layers call the **same service layer**.
 - Every persisted entity (except `tenants`) includes `tenant_id`.
 - All service methods require `tenant_id` and enforce it in reads/writes.
 - API routes are tenant-scoped via `/tenants/{tenant_id}/...`.
+- Tenant isolation is enforced at the service layer and validated via automated tests.
 
 ## Idempotent bank import
 
@@ -73,7 +74,7 @@ A simple score (0–100) is computed per invoice/transaction:
 Candidates are ranked deterministically by:
 1) score desc  
 2) abs(date_diff) asc  
-3) transaction id asc
+3) transaction id asc  
 
 Reconcile persists `matches` with `status="proposed"` for the top N candidates per invoice.
 
@@ -91,12 +92,44 @@ Confirming a match:
 
 The AI client is designed to be easily mocked in tests.
 
+## API testing (Postman)
+
+A ready-to-use **Postman collection** is included for easier manual testing and exploration.
+
+Location:
+
+```
+app/postman/
+```
+
+The collection covers:
+- Tenant creation
+- Invoice CRUD
+- Idempotent bank transaction import
+- Reconciliation + confirm flow
+- Explanation endpoint (AI + fallback)
+
+This is intended for **manual verification and demo purposes**.  
+Automated correctness and tenant isolation are enforced via the pytest test suite.
+
+## Testing strategy
+
+The test suite covers:
+
+- Creating invoices
+- Listing invoices (including filters)
+- Deleting invoices
+- Idempotent bank transaction import (replay + conflict)
+- Deterministic reconciliation ranking
+- Match confirmation and state transitions
+- AI explanation endpoint (mocked + fallback)
+- **Tenant isolation (cross-tenant access is explicitly rejected)**
+
 ## Deliberate scope tradeoffs (MVP)
 
 - Vendors are omitted to keep focus on core coordination mechanics.
 - GraphQL implements a minimal surface area, but uses the same services.
 - No migrations (tables are created on startup in local mode). In production, Alembic would be used.
-
 
 ## Project structure (feature modules)
 
