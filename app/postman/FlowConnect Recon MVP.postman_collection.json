@@ -1,0 +1,513 @@
+{
+	"info": {
+		"_postman_id": "301da4c3-5839-4d5d-bcec-7d48c143c64c",
+		"name": "FlowConnect Recon MVP",
+		"description": "Multi-tenant invoice reconciliation API (FastAPI + Strawberry + SQLAlchemy).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5109986"
+	},
+	"item": [
+		{
+			"name": "Tenants",
+			"item": [
+				{
+					"name": "Create Tenant (Acme)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+									"const json = pm.response.json();",
+									"if (json && json.id) { pm.collectionVariables.set('tenantId', json.id); }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Acme\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tenants",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Tenant (Duplicate -> 409)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Acme\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tenants",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Tenants",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tenants",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Invoices",
+			"item": [
+				{
+					"name": "Create Invoice",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+									"const json = pm.response.json();",
+									"if (json && json.id) { pm.collectionVariables.set('invoiceId', json.id); }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 100.0,\n  \"currency\": \"USD\",\n  \"invoice_date\": \"2025-01-01\",\n  \"description\": \"Acme January\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/invoices",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"invoices"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Invoices (filters)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/invoices?status=open&amount_min=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"invoices"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "open"
+								},
+								{
+									"key": "amount_min",
+									"value": "50"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Invoice",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/invoices/{{invoiceId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"invoices",
+								"{{invoiceId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Invoice (404 example)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/invoices/999999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"invoices",
+								"999999"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bank Transactions",
+			"item": [
+				{
+					"name": "Import Bank Transactions (bulk, idempotent)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+									"const json = pm.response.json();",
+									"if (json && json.transaction_ids && json.transaction_ids.length) {",
+									"  pm.collectionVariables.set('txId', json.transaction_ids[1] || json.transaction_ids[0]);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "{{idempotencyKey}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  {\n    \"external_id\": \"a\",\n    \"posted_at\": \"2025-01-10T10:00:00Z\",\n    \"amount\": 100.0,\n    \"currency\": \"USD\",\n    \"description\": \"Random\"\n  },\n  {\n    \"external_id\": \"b\",\n    \"posted_at\": \"2025-01-02T10:00:00Z\",\n    \"amount\": 100.0,\n    \"currency\": \"USD\",\n    \"description\": \"Acme January payment\"\n  },\n  {\n    \"external_id\": \"c\",\n    \"posted_at\": \"2025-01-02T10:00:00Z\",\n    \"amount\": 90.0,\n    \"currency\": \"USD\",\n    \"description\": \"Acme January payment\"\n  }\n]"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/bank-transactions/import",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"bank-transactions",
+								"import"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Import Replay (same Idempotency-Key, same payload)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "{{idempotencyKey}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  {\n    \"external_id\": \"a\",\n    \"posted_at\": \"2025-01-10T10:00:00Z\",\n    \"amount\": 100.0,\n    \"currency\": \"USD\",\n    \"description\": \"Random\"\n  },\n  {\n    \"external_id\": \"b\",\n    \"posted_at\": \"2025-01-02T10:00:00Z\",\n    \"amount\": 100.0,\n    \"currency\": \"USD\",\n    \"description\": \"Acme January payment\"\n  },\n  {\n    \"external_id\": \"c\",\n    \"posted_at\": \"2025-01-02T10:00:00Z\",\n    \"amount\": 90.0,\n    \"currency\": \"USD\",\n    \"description\": \"Acme January payment\"\n  }\n]"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/bank-transactions/import",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"bank-transactions",
+								"import"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Import Conflict (same Idempotency-Key, different payload -> 409)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "{{idempotencyKey}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  {\n    \"external_id\": \"a\",\n    \"posted_at\": \"2025-01-10T10:00:00Z\",\n    \"amount\": 101.0,\n    \"currency\": \"USD\",\n    \"description\": \"Random\"\n  }\n]"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/bank-transactions/import",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"bank-transactions",
+								"import"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reconciliation",
+			"item": [
+				{
+					"name": "Reconcile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+									"const json = pm.response.json();",
+									"if (Array.isArray(json) && json.length) {",
+									"  pm.collectionVariables.set('matchId', json[0].id);",
+									"  pm.collectionVariables.set('txId', json[0].bank_transaction_id);",
+									"  pm.collectionVariables.set('invoiceId', json[0].invoice_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"window_days\": 3,\n  \"max_candidates_per_invoice\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/reconcile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"reconcile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm Match",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/matches/{{matchId}}/confirm",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"matches",
+								"{{matchId}}",
+								"confirm"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Explain Reconciliation (fallback if AI not configured)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tenants/{{tenantId}}/reconcile/explain?invoice_id={{invoiceId}}&transaction_id={{txId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tenants",
+								"{{tenantId}}",
+								"reconcile",
+								"explain"
+							],
+							"query": [
+								{
+									"key": "invoice_id",
+									"value": "{{invoiceId}}"
+								},
+								{
+									"key": "transaction_id",
+									"value": "{{txId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "GraphQL",
+			"item": [
+				{
+					"name": "GraphQL Playground (open in browser)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GraphQL Query: tenants",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"query { tenants { id name createdAt } }\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/graphql",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "tenantId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "invoiceId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "matchId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "txId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "idempotencyKey",
+			"value": "k1",
+			"type": "string"
+		}
+	]
+}
