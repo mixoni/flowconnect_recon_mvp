@@ -13,6 +13,16 @@ class BankTransactionService:
     def __init__(self, session: Session):
         self.session = session
 
+    def list(self, tenant_id: int, limit: int = 100, offset: int = 0) -> list[BankTransaction]:
+        """List bank transactions for a tenant with pagination"""
+        stmt = (
+            select(BankTransaction)
+            .where(BankTransaction.tenant_id == tenant_id)
+            .order_by(BankTransaction.posted_at.desc(), BankTransaction.id.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(self.session.scalars(stmt).all())
     def import_bulk(self, tenant_id: int, idempotency_key: str, items: list[dict]) -> dict:
         req_hash = _canonical_hash(items)
 
